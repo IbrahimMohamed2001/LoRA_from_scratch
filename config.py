@@ -53,6 +53,7 @@ def get_config(**kwargs):
         "dataset_name": "dair-ai/emotion",
         "num_classes": 6,
         "lora": True,
+        "max_len": 300,
     }
 
     """
@@ -69,6 +70,7 @@ def get_config(**kwargs):
         "dataset_name": "dair-ai/emotion",
         "num_classes": 6,
         "lora": True,
+        "max_len": 300,
     }
 
     return {**defaults, **kwargs}
