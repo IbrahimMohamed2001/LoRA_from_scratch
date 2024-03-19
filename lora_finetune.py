@@ -18,7 +18,7 @@ def get_model(config, **kwargs):
     )
     tokenizer = AutoTokenizer.from_pretrained(config["model_name"])
 
-    if config['lora']:
+    if config["lora"]:
         model = get_lora_model(model, **kwargs)
 
     return model, tokenizer
@@ -47,7 +47,7 @@ def train_model(config, **kwargs):
         optimizer.load_state_dict(state["optimizer_state_dict"])
         global_step = state["global_step"]
 
-    for epoch in range(initial_epoch, config["epochs_num"]):
+    for epoch in range(initial_epoch, config["num_epochs"]):
         model.train()
         batch_iterator = tqdm(train_loader, desc=f"epoch{epoch:02d}")
 
