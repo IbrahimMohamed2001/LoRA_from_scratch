@@ -4,10 +4,11 @@ from datasets import load_dataset
 
 
 class EmotionDataset(Dataset):
-    def __init__(self, dataset, tokenizer, partition_key="train") -> None:
+    def __init__(self, dataset, tokenizer, max_len, partition_key="train") -> None:
         super().__init__()
         self.partition = dataset[partition_key]
         self.tokenizer = tokenizer
+        self.max_len = max_len
 
     def __len__(self):
         return len(self.partition)
@@ -16,7 +17,9 @@ class EmotionDataset(Dataset):
         text = self.partition[index]["text"]
         label = torch.tensor(self.partition[index]["label"], dtype=torch.int8)
 
-        tokenized = self.tokenizer(text, truncation=True, padding=True)
+        tokenized = self.tokenizer(
+            text, truncation=True, padding="max_length", max_length=self.max_len
+        )
         input_ids = torch.tensor(tokenized["input_ids"], dtype=torch.int64)
         attention_mask = torch.tensor(tokenized["attention_mask"], dtype=torch.int8)
 
@@ -30,9 +33,15 @@ class EmotionDataset(Dataset):
 
 def setup_dataloaders(config, tokenizer):
     dataset = load_dataset(config["dataset_name"])
-    train_dataset = EmotionDataset(dataset, tokenizer, partition_key="train")
-    val_dataset = EmotionDataset(dataset, tokenizer, partition_key="validation")
-    test_dataset = EmotionDataset(dataset, tokenizer, partition_key="test")
+    train_dataset = EmotionDataset(
+        dataset, tokenizer, config["max_len"], partition_key="train"
+    )
+    val_dataset = EmotionDataset(
+        dataset, tokenizer, config["max_len"], partition_key="validation"
+    )
+    test_dataset = EmotionDataset(
+        dataset, tokenizer, config["max_len"], partition_key="test"
+    )
 
     train_loader = DataLoader(
         dataset=train_dataset, batch_size=config["batch_size"], shuffle=True
