@@ -87,7 +87,9 @@ def train_model(config, **kwargs):
 
             outputs = model(input_ids, attention_mask)
 
-            loss = F.cross_entropy(outputs, label, label_smoothing=0.1)
+            loss = F.cross_entropy(
+                outputs, label, ignore_index=tokenizer.pad_token_id, label_smoothing=0.1
+            )
             avg_train_loss += loss.item()
 
             metric_tracker.increment()
