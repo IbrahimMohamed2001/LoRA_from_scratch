@@ -48,36 +48,37 @@ def train_model(config, **kwargs):
         optimizer.load_state_dict(state["optimizer_state_dict"])
         global_step = state["global_step"]
 
+    metrics = torchmetrics.MetricCollection(
+        {
+            "accuracy": Accuracy(
+                task="multiclass",
+                num_classes=config["num_classes"],
+                average="macro",
+            ),
+            "precision": Precision(
+                task="multiclass",
+                num_classes=config["num_classes"],
+                average="weighted",
+            ),
+            "recall": Recall(
+                task="multiclass",
+                num_classes=config["num_classes"],
+                average="weighted",
+            ),
+            "f1_score": F1Score(
+                task="multiclass",
+                num_classes=config["num_classes"],
+                average="weighted",
+            ),
+        }
+    )
+    metric_tracker = torchmetrics.MetricTracker(metrics).to(device)
+
     for epoch in range(initial_epoch, config["num_epochs"]):
         model.train()
         batch_iterator = tqdm(train_loader, desc=f"epoch{epoch:02d}")
 
         avg_train_loss = 0.0
-        metrics = torchmetrics.MetricCollection(
-            {
-                "accuracy": Accuracy(
-                    task="multiclass",
-                    num_classes=config["num_classes"],
-                    average="macro",
-                ),
-                "precision": Precision(
-                    task="multiclass",
-                    num_classes=config["num_classes"],
-                    average="weighted",
-                ),
-                "recall": Recall(
-                    task="multiclass",
-                    num_classes=config["num_classes"],
-                    average="weighted",
-                ),
-                "f1_score": F1Score(
-                    task="multiclass",
-                    num_classes=config["num_classes"],
-                    average="weighted",
-                ),
-            }
-        )
-        metric_tracker = torchmetrics.MetricTracker(metrics).to(device)
 
         for batch in batch_iterator:
             input_ids = batch["input_ids"].to(device)
