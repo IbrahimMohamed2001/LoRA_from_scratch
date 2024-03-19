@@ -39,6 +39,22 @@ def get_config(**kwargs):
 
     Returns:
         dict: Configuration dictionary containing the parameters.
+
+
+    defaults = {
+        "batch_size": 32,
+        "learning_rate": 1e-4,
+        "num_epochs": 20,
+        "model_folder": "weights",
+        "preload": None,
+        "model_basename": "transformer_model",
+        "experiment_name": "runs/tmodel",
+        "model_name": "distilbert-base-uncased",
+        "dataset_name": "dair-ai/emotion",
+        "num_classes": 6,
+        "lora": True,
+    }
+
     """
 
     defaults = {
@@ -52,6 +68,7 @@ def get_config(**kwargs):
         "model_name": "distilbert-base-uncased",
         "dataset_name": "dair-ai/emotion",
         "num_classes": 6,
+        "lora": True,
     }
 
     return {**defaults, **kwargs}

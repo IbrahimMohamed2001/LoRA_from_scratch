@@ -18,7 +18,9 @@ def get_model(config, **kwargs):
     )
     tokenizer = AutoTokenizer.from_pretrained(config["model_name"])
 
-    model = get_lora_model(model, **kwargs)
+    if config['lora']:
+        model = get_lora_model(model, **kwargs)
+
     return model, tokenizer
 
 
