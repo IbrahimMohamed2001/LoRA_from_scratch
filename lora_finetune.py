@@ -85,7 +85,7 @@ def train_model(config, **kwargs):
             label = batch["label"].to(device)
             attention_mask = batch["attention_mask"].to(device)
 
-            outputs = model(input_ids, attention_mask)
+            outputs = model(input_ids, attention_mask).logits
 
             loss = F.cross_entropy(
                 outputs, label, ignore_index=tokenizer.pad_token_id, label_smoothing=0.1
@@ -173,7 +173,7 @@ def validate_model(model, validation_loader, device, writer, epoch, global_step)
             input_ids = batch["input_ids"].to(device)
             label = batch["label"].to(device)
             attention_mask = batch["attention_mask"].to(device)
-            outputs = model(input_ids, attention_mask)
+            outputs = model(input_ids, attention_mask).logits
 
             val_loss = F.cross_entropy(outputs, label)
             avg_val_loss += val_loss
