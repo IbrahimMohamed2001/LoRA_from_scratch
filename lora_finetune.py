@@ -98,6 +98,8 @@ def train_model(config, **kwargs):
         recall_metric.reset()
         f1_metric.reset()
 
+        validate_model(model, tokenizer, val_loader, device, writer, epoch, global_step)
+
         model_filename = get_weights_file_path(config, epoch)
         torch.save(
             {
@@ -108,6 +110,51 @@ def train_model(config, **kwargs):
             },
             model_filename,
         )
+
+
+def validate_model(model, validation_loader, device, writer, epoch, global_step):
+    model.eval()
+
+    with torch.no_grad():
+        batch_iterator = tqdm(validation_loader, desc=f"epoch{epoch:02d}")
+        accuracy_metric = Accuracy(multiclass=True).to(device)
+        precision_metric = Precision(multiclass=True, average="weighted").to(device)
+        recall_metric = Recall(multiclass=True, average="weighted").to(device)
+        f1_metric = F1Score(multiclass=True, average="weighted").to(device)
+
+        for batch in batch_iterator:
+            input_ids = batch["input_ids"].to(device)
+            label = batch["label"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+            outputs = model(input_ids, attention_mask)
+
+            val_loss = F.cross_entropy(outputs, label)
+
+            predictions = torch.argmax(outputs, dim=1)
+            accuracy_metric.update(predictions, label)
+            precision_metric.update(predictions, label)
+            recall_metric.update(predictions, label)
+            f1_metric.update(predictions, label)
+
+            batch_iterator.set_postfix({"val_loss": f"{val_loss.item():6.3f}"})
+            writer.add_scalar("val_loss", val_loss.item(), global_step)
+            writer.flush()
+
+        val_acc = accuracy_metric.compute().item()
+        val_precision = precision_metric.compute().item()
+        val_recall = recall_metric.compute().item()
+        val_f1 = f1_metric.compute().item()
+
+        writer.add_scalar("val_accuracy", val_acc, global_step)
+        writer.add_scalar("val_precision", val_precision, global_step)
+        writer.add_scalar("val_recall", val_recall, global_step)
+        writer.add_scalar("val_f1", val_f1, global_step)
+        writer.flush()
+
+        accuracy_metric.reset()
+        precision_metric.reset()
+        recall_metric.reset()
+        f1_metric.reset()
 
 
 if __name__ == "__main__":
