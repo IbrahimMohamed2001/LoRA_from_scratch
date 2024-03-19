@@ -110,6 +110,8 @@ def train_model(config, **kwargs):
         train_recall = results["train_recall"].item()
         train_f1 = results["train_f1"].item()
 
+        metric_tracker.reset()
+
         writer.add_scalar("train_average_loss", avg_train_loss, epoch)
         writer.add_scalar("train_accuracy", train_acc, epoch)
         writer.add_scalar("train_precision", train_prec, epoch)
@@ -183,10 +185,10 @@ def validate_model(model, validation_loader, device, writer, epoch, global_step)
         results = metric_tracker.cpu().compute()
         avg_val_loss /= len(batch_iterator)
 
-        val_acc = results['val_acc'].item()
-        val_precision = results['val_precision'].item()
-        val_recall = results['val_recall'].item()
-        val_f1 = results['val_f1'].item()
+        val_acc = results["val_acc"].item()
+        val_precision = results["val_precision"].item()
+        val_recall = results["val_recall"].item()
+        val_f1 = results["val_f1"].item()
 
         writer.add_scalar("val_average_loss", avg_val_loss, global_step)
         writer.add_scalar("val_accuracy", val_acc, global_step)
@@ -194,6 +196,8 @@ def validate_model(model, validation_loader, device, writer, epoch, global_step)
         writer.add_scalar("val_recall", val_recall, global_step)
         writer.add_scalar("val_f1", val_f1, global_step)
         writer.flush()
+
+        metric_tracker.reset()
 
 
 if __name__ == "__main__":
