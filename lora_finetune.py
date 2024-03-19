@@ -9,6 +9,7 @@ from pathlib import Path
 from dataset import setup_dataloaders
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from lora_model import get_lora_model
+import torchmetrics
 from torchmetrics import Accuracy, Precision, Recall, F1Score
 
 
@@ -51,12 +52,32 @@ def train_model(config, **kwargs):
         model.train()
         batch_iterator = tqdm(train_loader, desc=f"epoch{epoch:02d}")
 
-        avg_loss = 0.0
-
-        accuracy_metric = Accuracy(multiclass=True).to(device)
-        precision_metric = Precision(multiclass=True, average="weighted").to(device)
-        recall_metric = Recall(multiclass=True, average="weighted").to(device)
-        f1_metric = F1Score(multiclass=True, average="weighted").to(device)
+        avg_train_loss = 0.0
+        metrics = torchmetrics.MetricCollection(
+            {
+                "accuracy": Accuracy(
+                    task="multiclass",
+                    num_classes=config["num_classes"],
+                    average="macro",
+                ),
+                "precision": Precision(
+                    task="multiclass",
+                    num_classes=config["num_classes"],
+                    average="weighted",
+                ),
+                "recall": Recall(
+                    task="multiclass",
+                    num_classes=config["num_classes"],
+                    average="weighted",
+                ),
+                "f1_score": F1Score(
+                    task="multiclass",
+                    num_classes=config["num_classes"],
+                    average="weighted",
+                ),
+            }
+        )
+        metric_tracker = torchmetrics.MetricTracker(metrics).to(device)
 
         for batch in batch_iterator:
             input_ids = batch["input_ids"].to(device)
@@ -66,13 +87,12 @@ def train_model(config, **kwargs):
             outputs = model(input_ids, attention_mask)
 
             loss = F.cross_entropy(outputs, label, label_smoothing=0.1)
-            avg_loss += loss.item()
+            avg_train_loss += loss.item()
+
+            metric_tracker.increment()
 
             predictions = torch.argmax(outputs, dim=1)
-            accuracy_metric.update(predictions, label)
-            precision_metric.update(predictions, label)
-            recall_metric.update(predictions, label)
-            f1_metric.update(predictions, label)
+            metric_tracker.update(predictions, label)
 
             batch_iterator.set_postfix({"train_loss": f"{loss.item():6.3f}"})
 
@@ -83,22 +103,19 @@ def train_model(config, **kwargs):
             loss.backward()
             optimizer.step()
 
-        avg_loss /= len(batch_iterator)
-        train_acc = accuracy_metric.compute().item()
-        train_prec = precision_metric.compute().item()
-        train_recall = recall_metric.compute().item()
-        train_f1 = f1_metric.compute().item()
+        avg_train_loss /= len(batch_iterator)
+        results = metric_tracker.cpu().compute()
+        train_acc = results["train_acc"].item()
+        train_prec = results["train_prec"].item()
+        train_recall = results["train_recall"].item()
+        train_f1 = results["train_f1"].item()
 
+        writer.add_scalar("train_average_loss", avg_train_loss, epoch)
         writer.add_scalar("train_accuracy", train_acc, epoch)
         writer.add_scalar("train_precision", train_prec, epoch)
         writer.add_scalar("train_recall", train_recall, epoch)
         writer.add_scalar("train_f1", train_f1, epoch)
         writer.flush()
-
-        accuracy_metric.reset()
-        precision_metric.reset()
-        recall_metric.reset()
-        f1_metric.reset()
 
         validate_model(model, tokenizer, val_loader, device, writer, epoch, global_step)
 
@@ -119,10 +136,33 @@ def validate_model(model, validation_loader, device, writer, epoch, global_step)
 
     with torch.no_grad():
         batch_iterator = tqdm(validation_loader, desc=f"epoch{epoch:02d}")
-        accuracy_metric = Accuracy(multiclass=True).to(device)
-        precision_metric = Precision(multiclass=True, average="weighted").to(device)
-        recall_metric = Recall(multiclass=True, average="weighted").to(device)
-        f1_metric = F1Score(multiclass=True, average="weighted").to(device)
+
+        avg_val_loss = 0.0
+        metrics = torchmetrics.MetricCollection(
+            {
+                "accuracy": Accuracy(
+                    task="multiclass",
+                    num_classes=config["num_classes"],
+                    average="macro",
+                ),
+                "precision": Precision(
+                    task="multiclass",
+                    num_classes=config["num_classes"],
+                    average="weighted",
+                ),
+                "recall": Recall(
+                    task="multiclass",
+                    num_classes=config["num_classes"],
+                    average="weighted",
+                ),
+                "f1_score": F1Score(
+                    task="multiclass",
+                    num_classes=config["num_classes"],
+                    average="weighted",
+                ),
+            }
+        )
+        metric_tracker = torchmetrics.MetricTracker(metrics).to(device)
 
         for batch in batch_iterator:
             input_ids = batch["input_ids"].to(device)
@@ -131,32 +171,29 @@ def validate_model(model, validation_loader, device, writer, epoch, global_step)
             outputs = model(input_ids, attention_mask)
 
             val_loss = F.cross_entropy(outputs, label)
+            avg_val_loss += val_loss
 
             predictions = torch.argmax(outputs, dim=1)
-            accuracy_metric.update(predictions, label)
-            precision_metric.update(predictions, label)
-            recall_metric.update(predictions, label)
-            f1_metric.update(predictions, label)
+            metric_tracker.update(predictions, label)
 
             batch_iterator.set_postfix({"val_loss": f"{val_loss.item():6.3f}"})
             writer.add_scalar("val_loss", val_loss.item(), global_step)
             writer.flush()
 
-        val_acc = accuracy_metric.compute().item()
-        val_precision = precision_metric.compute().item()
-        val_recall = recall_metric.compute().item()
-        val_f1 = f1_metric.compute().item()
+        results = metric_tracker.cpu().compute()
+        avg_val_loss /= len(batch_iterator)
 
+        val_acc = results['val_acc'].item()
+        val_precision = results['val_precision'].item()
+        val_recall = results['val_recall'].item()
+        val_f1 = results['val_f1'].item()
+
+        writer.add_scalar("val_average_loss", avg_val_loss, global_step)
         writer.add_scalar("val_accuracy", val_acc, global_step)
         writer.add_scalar("val_precision", val_precision, global_step)
         writer.add_scalar("val_recall", val_recall, global_step)
         writer.add_scalar("val_f1", val_f1, global_step)
         writer.flush()
-
-        accuracy_metric.reset()
-        precision_metric.reset()
-        recall_metric.reset()
-        f1_metric.reset()
 
 
 if __name__ == "__main__":
