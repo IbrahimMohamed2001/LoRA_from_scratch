@@ -15,7 +15,7 @@ class EmotionDataset(Dataset):
 
     def __getitem__(self, index):
         text = self.partition[index]["text"]
-        label = torch.tensor(self.partition[index]["label"], dtype=torch.int8)
+        label = torch.tensor(self.partition[index]["label"], dtype=torch.long)
 
         tokenized = self.tokenizer(
             text, truncation=True, padding="max_length", max_length=self.max_len

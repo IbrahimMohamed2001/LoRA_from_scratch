@@ -76,7 +76,7 @@ def train_model(config, **kwargs):
 
     for epoch in range(initial_epoch, config["num_epochs"]):
         model.train()
-        batch_iterator = tqdm(train_loader, desc=f"epoch{epoch:02d}")
+        batch_iterator = tqdm(train_loader, desc=f"epoch {epoch:02d}")
 
         avg_train_loss = 0.0
 
@@ -140,7 +140,7 @@ def validate_model(model, validation_loader, device, writer, epoch, global_step)
     model.eval()
 
     with torch.no_grad():
-        batch_iterator = tqdm(validation_loader, desc=f"epoch{epoch:02d}")
+        batch_iterator = tqdm(validation_loader, desc=f"epoch {epoch:02d}")
 
         avg_val_loss = 0.0
         metrics = torchmetrics.MetricCollection(
