@@ -122,7 +122,7 @@ def train_model(config, **kwargs):
         writer.add_scalar("train_f1", train_f1, epoch)
         writer.flush()
 
-        validate_model(model, tokenizer, val_loader, device, writer, epoch, global_step)
+        validate_model(model, val_loader, config, device, writer, epoch, global_step)
 
         model_filename = get_weights_file_path(config, epoch)
         torch.save(
@@ -136,7 +136,9 @@ def train_model(config, **kwargs):
         )
 
 
-def validate_model(model, validation_loader, device, writer, epoch, global_step):
+def validate_model(
+    model, validation_loader, config, device, writer, epoch, global_step
+):
     model.eval()
 
     with torch.no_grad():
