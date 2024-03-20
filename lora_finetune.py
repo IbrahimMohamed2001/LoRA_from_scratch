@@ -106,6 +106,8 @@ def train_model(config, **kwargs):
             loss.backward()
             optimizer.step()
 
+            global_step += 1
+
         avg_train_loss /= len(batch_iterator)
         results = metric_tracker.compute()
         train_acc = results["accuracy"].item()
