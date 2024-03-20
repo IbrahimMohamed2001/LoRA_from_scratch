@@ -181,6 +181,7 @@ def validate_model(
             avg_val_loss += val_loss
 
             predictions = torch.argmax(outputs, dim=1)
+            metric_tracker.increment()
             metric_tracker.update(predictions, label)
 
             batch_iterator.set_postfix({"val_loss": f"{val_loss.item():6.3f}"})
