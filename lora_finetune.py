@@ -108,10 +108,10 @@ def train_model(config, **kwargs):
 
         avg_train_loss /= len(batch_iterator)
         results = metric_tracker.cpu().compute()
-        train_acc = results["train_acc"].item()
-        train_prec = results["train_prec"].item()
-        train_recall = results["train_recall"].item()
-        train_f1 = results["train_f1"].item()
+        train_acc = results["accuracy"].item()
+        train_prec = results["precision"].item()
+        train_recall = results["recall"].item()
+        train_f1 = results["f1_score"].item()
 
         metric_tracker.reset()
 
@@ -188,10 +188,10 @@ def validate_model(model, validation_loader, device, writer, epoch, global_step)
         results = metric_tracker.cpu().compute()
         avg_val_loss /= len(batch_iterator)
 
-        val_acc = results["val_acc"].item()
-        val_precision = results["val_precision"].item()
-        val_recall = results["val_recall"].item()
-        val_f1 = results["val_f1"].item()
+        val_acc = results["accuracy"].item()
+        val_precision = results["precision"].item()
+        val_recall = results["recall"].item()
+        val_f1 = results["f1_score"].item()
 
         writer.add_scalar("val_average_loss", avg_val_loss, global_step)
         writer.add_scalar("val_accuracy", val_acc, global_step)
