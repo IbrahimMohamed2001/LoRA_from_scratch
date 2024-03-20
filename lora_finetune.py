@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from config import get_weights_file_path, get_config
+from config import get_weights_file_path, get_config, latest_weights_file_path
 from tqdm import tqdm
 from torch.optim import AdamW
 import warnings
@@ -39,11 +39,17 @@ def train_model(config, **kwargs):
     writer = SummaryWriter(config["experiment_name"])
     initial_epoch = 0
     global_step = 0
+    preload = config["preload"]
+    model_filename = (
+        latest_weights_file_path(config)
+        if preload == "latest"
+        else get_weights_file_path(config, preload)
+    )
 
-    if config["preload"]:
-        model_filename = get_weights_file_path(config, config["preload"])
+    if model_filename:
         print(f"preloading model {model_filename}")
         state = torch.load(model_filename)
+        model.load_state_dict(state["model_state_dict"])
         initial_epoch = state["epoch"] + 1
         optimizer.load_state_dict(state["optimizer_state_dict"])
         global_step = state["global_step"]
@@ -73,6 +79,11 @@ def train_model(config, **kwargs):
         }
     )
     metric_tracker = torchmetrics.MetricTracker(metrics).to(device)
+    print("total parameters:", sum(p.numel() for p in model.parameters()))
+    print(
+        "trainable parameters:",
+        sum(p.numel() for p in model.parameters() if p.requires_grad),
+    )
 
     for epoch in range(initial_epoch, config["num_epochs"]):
         model.train()
@@ -124,7 +135,7 @@ def train_model(config, **kwargs):
         writer.add_scalar("train_f1", train_f1, epoch)
         writer.flush()
 
-        validate_model(model, val_loader, config, device, writer, epoch, global_step)
+        validate_model(model, val_loader, config, device, writer, epoch)
 
         model_filename = get_weights_file_path(config, epoch)
         torch.save(
@@ -138,9 +149,7 @@ def train_model(config, **kwargs):
         )
 
 
-def validate_model(
-    model, validation_loader, config, device, writer, epoch, global_step
-):
+def validate_model(model, validation_loader, config, device, writer, epoch):
     model.eval()
 
     with torch.no_grad():
@@ -187,8 +196,6 @@ def validate_model(
             metric_tracker.update(predictions, label)
 
             batch_iterator.set_postfix({"val_loss": f"{val_loss.item():6.3f}"})
-            writer.add_scalar("val_loss", val_loss.item(), global_step)
-            writer.flush()
 
         results = metric_tracker.compute()
         avg_val_loss /= len(batch_iterator)
@@ -198,11 +205,11 @@ def validate_model(
         val_recall = results["recall"].item()
         val_f1 = results["f1_score"].item()
 
-        writer.add_scalar("val_average_loss", avg_val_loss, global_step)
-        writer.add_scalar("val_accuracy", val_acc, global_step)
-        writer.add_scalar("val_precision", val_precision, global_step)
-        writer.add_scalar("val_recall", val_recall, global_step)
-        writer.add_scalar("val_f1", val_f1, global_step)
+        writer.add_scalar("val_average_loss", avg_val_loss, epoch)
+        writer.add_scalar("val_accuracy", val_acc, epoch)
+        writer.add_scalar("val_precision", val_precision, epoch)
+        writer.add_scalar("val_recall", val_recall, epoch)
+        writer.add_scalar("val_f1", val_f1, epoch)
         writer.flush()
 
         metric_tracker.reset()
