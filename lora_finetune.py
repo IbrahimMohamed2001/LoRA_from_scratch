@@ -107,7 +107,7 @@ def train_model(config, **kwargs):
             optimizer.step()
 
         avg_train_loss /= len(batch_iterator)
-        results = metric_tracker.cpu().compute()
+        results = metric_tracker.compute()
         train_acc = results["accuracy"].item()
         train_prec = results["precision"].item()
         train_recall = results["recall"].item()
@@ -188,7 +188,7 @@ def validate_model(
             writer.add_scalar("val_loss", val_loss.item(), global_step)
             writer.flush()
 
-        results = metric_tracker.cpu().compute()
+        results = metric_tracker.compute()
         avg_val_loss /= len(batch_iterator)
 
         val_acc = results["accuracy"].item()
