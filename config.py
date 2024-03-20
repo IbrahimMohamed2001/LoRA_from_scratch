@@ -64,7 +64,7 @@ def get_config(**kwargs):
         "num_epochs": 20,
         "model_folder": "weights",
         "preload": None,
-        "model_basename": "transformer_model",
+        "model_basename": "distilbert_base_model",
         "experiment_name": "runs/tmodel",
         "model_name": "distilbert-base-uncased",
         "dataset_name": "dair-ai/emotion",
@@ -92,3 +92,24 @@ def get_weights_file_path(config, epoch: str):
     model_basename = config["model_basename"]
     model_filename = f"{model_basename}_{epoch}.pt"
     return str(Path(".") / model_folder / model_filename)
+
+
+def latest_weights_file_path(config):
+    """
+    Retrieves the path to the most recently saved model weights file.
+
+    Args:
+        config (dict): A configuration dictionary containing parameters.
+
+    Returns:
+        str: The path to the latest weights file, or None if no weights files are found.
+    """
+
+    model_folder = config["model_folder"]
+    model_filename = f"{config['model_basename']}*"
+    weights_files = list(Path(model_folder).glob(model_filename))
+
+    if len(weights_files) == 0:
+        return None
+
+    return str(sorted(weights_files)[-1])
