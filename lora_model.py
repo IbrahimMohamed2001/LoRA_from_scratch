@@ -120,8 +120,16 @@ def get_lora_model(model: nn.Module, config: dict = None, **kwargs) -> nn.Module
             layer.ffn.lin1 = assign_lora(layer.ffn.lin1)
             layer.ffn.lin2 = assign_lora(layer.ffn.lin2)
 
-    if config["lora_head"]:
+    if config["lora_classifier"]:
+        model.classifier = assign_lora(model.classifier)
+    elif config["train_classifier"]:
+        model.classifier.requires_grad_(True)
+
+    if config["lora_projection"]:
         model.pre_classifier = assign_lora(model.pre_classifier)
         model.classifier = assign_lora(model.classifier)
+    elif config["train_projection"]:
+        model.pre_classifier.requires_grad_(True)
+        model.classifier.requires_grad_(True)
 
     return model

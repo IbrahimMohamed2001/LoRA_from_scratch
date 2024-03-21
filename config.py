@@ -12,9 +12,12 @@ def get_lora_config(**kwargs):
         "lora_query": True,
         "lora_key": True,
         "lora_value": True,
-        "lora_projection": True,
-        "lora_ffn": True,
         "lora_head": True,
+        "lora_ffn": True,
+        "lora_projection": False,
+        "train_projection": False,
+        "lora_classifier": False,
+        "train_classifier": True,
     }
 
     """
@@ -25,10 +28,28 @@ def get_lora_config(**kwargs):
         "lora_query": True,
         "lora_key": True,
         "lora_value": True,
-        "lora_projection": True,
-        "lora_ffn": True,
         "lora_head": True,
+        "lora_ffn": True,
+        "lora_projection": False,
+        "train_projection": False,
+        "lora_classifier": False,
+        "train_classifier": True,
     }
+
+    lora_projection = kwargs.get(["lora_projection"], False)
+    train_projection = kwargs.get(["train_projection"], True)
+    lora_classifier = kwargs.get(["lora_classifier"], True)
+    train_classifier = kwargs.get(["train_classifier"], False)
+
+    assert (
+        lora_projection != train_projection
+        or lora_projection == train_projection is False
+    ), "either to train or to apply lora or neither of them"
+
+    assert (
+        lora_classifier != train_classifier
+        or lora_classifier == train_classifier is False
+    ), "either to train or to apply lora or neither of them"
 
     return {**defaults, **kwargs}
 
@@ -52,7 +73,8 @@ def get_config(**kwargs):
         "model_name": "distilbert-base-uncased",
         "dataset_name": "dair-ai/emotion",
         "num_classes": 6,
-        "lora": True,
+        "lora_fine_tuning": True,
+        "train_last_layer": True,
         "max_len": 300,
     }
 
@@ -69,7 +91,7 @@ def get_config(**kwargs):
         "model_name": "distilbert-base-uncased",
         "dataset_name": "dair-ai/emotion",
         "num_classes": 6,
-        "lora": True,
+        "lora_fine_tuning": True,
         "max_len": 300,
     }
 
