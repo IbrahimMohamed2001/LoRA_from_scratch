@@ -15,9 +15,7 @@ def get_lora_config(**kwargs):
         "lora_head": True,
         "lora_ffn": True,
         "lora_projection": False,
-        "train_projection": False,
-        "lora_classifier": False,
-        "train_classifier": True,
+        "train_projection": True,
     }
 
     """
@@ -31,24 +29,15 @@ def get_lora_config(**kwargs):
         "lora_head": True,
         "lora_ffn": True,
         "lora_projection": False,
-        "train_projection": False,
-        "lora_classifier": False,
-        "train_classifier": True,
+        "train_projection": True,
     }
 
     lora_projection = kwargs.get(["lora_projection"], False)
     train_projection = kwargs.get(["train_projection"], True)
-    lora_classifier = kwargs.get(["lora_classifier"], True)
-    train_classifier = kwargs.get(["train_classifier"], False)
 
     assert (
         lora_projection != train_projection
         or lora_projection == train_projection is False
-    ), "either to train or to apply lora or neither of them"
-
-    assert (
-        lora_classifier != train_classifier
-        or lora_classifier == train_classifier is False
     ), "either to train or to apply lora or neither of them"
 
     return {**defaults, **kwargs}
