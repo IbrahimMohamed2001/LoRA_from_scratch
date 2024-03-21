@@ -19,7 +19,7 @@ def get_model(config, **kwargs):
     )
     tokenizer = AutoTokenizer.from_pretrained(config["model_name"])
 
-    if config["lora"]:
+    if config["lora_fine_tuning"]:
         model = get_lora_model(model, **kwargs)
 
     return model, tokenizer

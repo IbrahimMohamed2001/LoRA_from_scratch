@@ -32,8 +32,8 @@ def get_lora_config(**kwargs):
         "train_projection": True,
     }
 
-    lora_projection = kwargs.get(["lora_projection"], False)
-    train_projection = kwargs.get(["train_projection"], True)
+    lora_projection = kwargs.get("lora_projection", False)
+    train_projection = kwargs.get("train_projection", True)
 
     assert (
         lora_projection != train_projection
@@ -123,4 +123,4 @@ def latest_weights_file_path(config):
     if len(weights_files) == 0:
         return None
 
-    return str(sorted(weights_files)[-1])
+    return max(weights_files, key=lambda x: int(str(x).split("_")[-1].split(".")[0]))
