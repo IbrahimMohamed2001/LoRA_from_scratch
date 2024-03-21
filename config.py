@@ -43,7 +43,7 @@ def get_config(**kwargs):
 
     defaults = {
         "batch_size": 32,
-        "learning_rate": 1e-4,
+        "learning_rate": 1e-5,
         "num_epochs": 20,
         "model_folder": "weights",
         "preload": 'latest',
@@ -60,7 +60,7 @@ def get_config(**kwargs):
 
     defaults = {
         "batch_size": 32,
-        "learning_rate": 1e-4,
+        "learning_rate": 1e-5,
         "num_epochs": 20,
         "model_folder": "weights",
         "preload": "latest",

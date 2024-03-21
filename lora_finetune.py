@@ -52,6 +52,8 @@ def train_model(config, **kwargs):
         model.load_state_dict(state["model_state_dict"])
         initial_epoch = state["epoch"] + 1
         optimizer.load_state_dict(state["optimizer_state_dict"])
+        for param_group in optimizer.param_groups:
+            param_group["lr"] = config["learning_rate"]
         global_step = state["global_step"]
 
     metrics = torchmetrics.MetricCollection(
