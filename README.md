@@ -18,8 +18,13 @@ This repository contains code for fine-tuning a sequence classification model us
 
 ## Installation
 
-To install the required dependencies, run:
+1. Clone the repository:
+```bash
+git clone https://github.com/IbrahimMohamed2001/LoRA_from_scratch.git
+cd LoRA_from_scratch
+```
 
+2. Install the required packages:
 ```bash
 pip install -r requirements.txt
 ```
@@ -81,5 +86,3 @@ This project uses the following libraries:
 - [TorchMetrics](https://torchmetrics.readthedocs.io/)
 - [TensorBoard](https://www.tensorflow.org/tensorboard)
 - [Hugging Face Datasets](https://huggingface.co/docs/datasets/)
-
-Feel free to modify this `README.md` file to better suit your project's needs.
